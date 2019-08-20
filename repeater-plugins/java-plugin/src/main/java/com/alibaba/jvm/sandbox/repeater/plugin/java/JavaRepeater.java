@@ -35,7 +35,7 @@ public class JavaRepeater extends AbstractRepeater {
         if (bean == null) {
             throw new RepeatException("no bean found in context, className=" + identity.getLocation());
         }
-        if (invocation.getType() != getType()) {
+        if (invocation.getType().name() != getType().name()) {
             throw new RepeatException("invoke type miss match, required invoke type is: " + invocation.getType());
         }
         String[] array = identity.getEndpoint().split("~");

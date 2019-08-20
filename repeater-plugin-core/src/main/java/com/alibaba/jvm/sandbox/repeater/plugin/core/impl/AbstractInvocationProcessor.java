@@ -15,6 +15,8 @@ import com.alibaba.jvm.sandbox.repeater.plugin.domain.mock.MockRequest;
 import com.alibaba.jvm.sandbox.repeater.plugin.domain.mock.MockResponse;
 import com.alibaba.jvm.sandbox.repeater.plugin.exception.RepeatException;
 import com.google.common.collect.Lists;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 import java.util.Map;
@@ -25,6 +27,8 @@ import java.util.Map;
  * @author zhaoyb1990
  */
 public abstract class AbstractInvocationProcessor implements InvocationProcessor {
+
+    protected static Logger log = LoggerFactory.getLogger(AbstractInvocationProcessor.class);
 
     @Override
     public Object[] assembleRequest(BeforeEvent event) {

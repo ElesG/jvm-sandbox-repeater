@@ -1,5 +1,7 @@
 package com.alibaba.jvm.sandbox.repeater.plugin.dubbo;
 
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import com.alibaba.jvm.sandbox.api.event.Event;
 import com.alibaba.jvm.sandbox.repeater.plugin.api.InvocationProcessor;
 import com.alibaba.jvm.sandbox.repeater.plugin.core.impl.AbstractInvokePluginAdapter;
@@ -25,15 +27,16 @@ public class DubboConsumerPlugin extends AbstractInvokePluginAdapter {
 
     @Override
     protected List<EnhanceModel> getEnhanceModels() {
-        EnhanceModel onResponse = EnhanceModel.builder().classPattern("org.apache.dubbo.rpc.filter.ConsumerContextFilter$ConsumerContextListener")
-                .methodPatterns(EnhanceModel.MethodPattern.transform("onResponse"))
-                .watchTypes(Event.Type.BEFORE,Event.Type.RETURN, Event.Type.THROWS)
-                .build();
-        EnhanceModel invoke = EnhanceModel.builder().classPattern("org.apache.dubbo.rpc.filter.ConsumerContextFilter")
+        EnhanceModel invoke = EnhanceModel.builder().classPattern("com.alibaba.dubbo.rpc.filter.ConsumerContextFilter")
                 .methodPatterns(EnhanceModel.MethodPattern.transform("invoke"))
                 .watchTypes(Event.Type.BEFORE,Event.Type.RETURN, Event.Type.THROWS)
                 .build();
-        return Lists.newArrayList(onResponse, invoke);
+        // 添加AbstractClusterInvoker的监听，mock到zk注册中心获取服务的步骤
+        EnhanceModel abstractClusterInvoker = EnhanceModel.builder().classPattern("com.alibaba.dubbo.rpc.cluster.support.AbstractClusterInvoker")
+                .methodPatterns(EnhanceModel.MethodPattern.transform("invoke"))
+                .watchTypes(Event.Type.BEFORE,Event.Type.RETURN, Event.Type.THROWS)
+                .build();
+        return Lists.newArrayList(invoke, abstractClusterInvoker);
     }
 
     @Override
