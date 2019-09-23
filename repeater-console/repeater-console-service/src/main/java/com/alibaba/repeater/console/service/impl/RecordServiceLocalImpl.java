@@ -110,14 +110,14 @@ public class RecordServiceLocalImpl extends AbstractRecordService implements Rec
         }
         List<RepeaterResult<String>> results = new ArrayList<RepeaterResult<String>>();
 
-        for(Record record: records){
+        records.forEach(record -> {
             RepeaterResult<String> pr = repeat(record, null);
             if (pr.isSuccess()) {
                 repeatCache.put(pr.getData(), record);
                 recordRepeatMap.put(pr.getData(), record.getTraceId());
             }
             results.add(pr);
-        }
+        });
 
         return RepeaterResult.builder().success(true).message("operate success").data(results).build();
     }
@@ -137,27 +137,15 @@ public class RecordServiceLocalImpl extends AbstractRecordService implements Rec
 
     @Override
     public RepeaterResult<List<RepeatModel>> batchCallback(String appName) {
-        List<Record> records = getRecordByAppName(appName);
         // 根据appName获取对应的traceId
-        List<String> traceIds = new ArrayList();
-        for(Record record : records){
-            traceIds.add(record.getTraceId());
-        }
+        List<Record> records = getRecordByAppName(appName);
+        List<String> traceIds = records.stream().map(record -> record.getTraceId()).collect(Collectors.toList());
 
-        // 根据traceId从执行结果记录中获取对应的执行结果记录
-        List<String> repeatIds = new ArrayList();
-        for(String key : recordRepeatMap.keySet()){
-            if( traceIds.contains(recordRepeatMap.get(key))){
-                repeatIds.add(key);
-            }
-        }
-        
+        // 根据traceId过滤获取的执行结果记录中获取其repeatId
+        List<String> repeatIds = recordRepeatMap.keySet().stream().filter(key -> traceIds.contains(recordRepeatMap.get(key))).collect(Collectors.toList());
 
-        // 根据从基于traceId过滤获取的执行结果记录中获取其repeatId
-        List<RepeatModel> repeatModels = new ArrayList();
-        for(String repeatId : repeatIds){
-            repeatModels.add(repeatModelCache.get(repeatId));
-        }
+        // 根据获取到的repeatId列表获取对应的执行结果记录
+        List<RepeatModel> repeatModels = repeatIds.stream().map(key -> repeatModelCache.get(key)).collect(Collectors.toList());
 
         // 当执行中缓存中存在所需要获取的执行结果记录的repeatId时，则认为这次批量录取回放还在执行中
         for(String repeatId:repeatIds){
@@ -179,12 +167,8 @@ public class RecordServiceLocalImpl extends AbstractRecordService implements Rec
      */
     private List<Record> getRecordByAppName(String appName){
         // 遍历recordCache的key，把key中包含了appName的对象放到records中
-        List<Record> records = new ArrayList();
-        for(String key: recordCache.keySet()){
-            if(key.contains(appName)){
-                records.add(recordCache.get(key));
-            }
-        }
+        List<String> recordKeys = recordCache.keySet().stream().filter(key -> key.contains(appName)).collect(Collectors.toList());
+        List<Record> records = recordKeys.stream().map(key -> recordCache.get(key)).collect(Collectors.toList());
         return records;
 
     }
